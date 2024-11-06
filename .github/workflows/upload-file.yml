@@ -1,0 +1,35 @@
+name: Upload Files to Release
+
+on:
+  workflow_run:
+    workflows: ["Create Release"]
+    types:
+      - completed
+
+jobs:
+  upload-files:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+
+      - name: Build
+        run: echo ${{ github.sha }} > Another.txt
+
+      - name: Test
+        run: cat Another.txt
+
+      - name: Get latest tag
+        id: tag
+        run: |
+          latest_tag=$(git tag -l --sort=-v:refname | head -1 | xargs echo)
+          echo "Latest Tag: $latest_tag"
+          echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
+
+      - name: Upload additional files to release
+        run: |
+          gh release upload ${{steps.tag.outputs.latest_tag}} Another.txt
