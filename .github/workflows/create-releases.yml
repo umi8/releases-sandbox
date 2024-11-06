@@ -1,9 +1,7 @@
-name: Create a release
+name: Create Release
 
-on:
-  push:
-    tags:
-      - 'v*'
+ons
+  workflow_dispatch
 
 jobs:
   create-release:
@@ -12,12 +10,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Define next taf
+        id: tag
+        run: |
+          latest_tag=$(git tag -l --sort=-v:refname | head -1)
+          IFS='.' read -r -a parts <<< "${latest_tag#v}"
+          major="${parts[0]}"
+          minor="${parts[1]}"
+          patch="${parts[2]}"
+          new_tag="v$major.$minor.$((patch + 1))"
+          echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+
       - name: Build
         run: echo ${{ github.sha }} > Release.txt
+
       - name: Test
         run: cat Release.txt
-      - name: Release
+
+      - name: Create Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
+          tag_name: ${{ steps.tag.outputs.new_tag}}
+          name: ${{ steps.tag.outputs.new_tag}}
           files: Release.txt
