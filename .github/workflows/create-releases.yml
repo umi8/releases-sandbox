@@ -16,7 +16,7 @@ jobs:
       - name: Define next tag
         id: tag
         run: |
-          latest_tag=$(git tag -l --sort=-v:refname | head -1)
+          latest_tag=$(git tag -l --sort=-v:refname | head -1 | xargs echo)
           IFS='.' read -r -a parts <<< "${latest_tag#v}"
           major="${parts[0]}"
           minor="${parts[1]}"
